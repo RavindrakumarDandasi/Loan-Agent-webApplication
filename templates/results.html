@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Assessment Results - Loan Eligibility Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%230066CC'>💰</text></svg>">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">💰</div>
+                <div class="logo-text">
+                    <h1>Loan Eligibility Agent</h1>
+                    <p>Professional AI-Powered Loan Assessment System</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Results Container -->
+        <div id="resultsContainer" class="results-container show">
+            <div class="results-header">
+                <h2>Loan Eligibility Assessment Results</h2>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="status-badge approved" id="statusBadge">
+                ✅ Assessment Complete
+            </div>
+
+            <!-- Results Grid -->
+            <div class="results-grid" id="resultsGrid">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="progress-section" id="progressSection">
+                <!-- Progress bars will be populated by JavaScript -->
+            </div>
+
+            <!-- Recommendation Section -->
+            <div class="recommendation-section" id="recommendationSection">
+                <!-- Recommendation will be populated by JavaScript -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button type="button" id="downloadBtn" class="btn btn-primary" onclick="downloadResults()">
+                    📥 Download Results (JSON)
+                </button>
+                <button type="button" id="applyAgainBtn" class="btn btn-secondary" onclick="goBackToForm()">
+                    🔄 Apply Again
+                </button>
+            </div>
+        </div>
+
+        <!-- Message if no results -->
+        <div id="noResultsMessage" class="text-center" style="padding: 3rem; display: none;">
+            <h2>No Results Found</h2>
+            <p>Please go back to the form to check your eligibility.</p>
+            <button onclick="goBackToForm()" class="btn btn-primary" style="margin-top: 1rem;">
+                ← Back to Form
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 Loan Eligibility Agent. All rights reserved.</p>
+        <p>Powered by Multi-Agent AI System | FastAPI Backend</p>
+    </footer>
+
+    <script>
+        // Load and display results from local storage
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultData = localStorage.getItem('lastResult');
+            if (resultData) {
+                try {
+                    const result = JSON.parse(resultData);
+                    displayResults(result);
+                } catch (e) {
+                    console.error('Error parsing results:', e);
+                    showNoResults();
+                }
+            } else {
+                showNoResults();
+            }
+        });
+
+        function displayResults(result) {
+            const statusClass = result.decision === 'APPROVED' ? 'approved' :
+                               result.decision === 'REJECTED' ? 'rejected' : 'review';
+            const statusText = result.decision === 'APPROVED' ? '✅ Approved' :
+                              result.decision === 'REJECTED' ? '❌ Rejected' : '⏳ Review Required';
+
+            document.getElementById('statusBadge').className = `status-badge ${statusClass}`;
+            document.getElementById('statusBadge').textContent = statusText;
+
+            // Results Grid
+            const resultsGridHTML = `
+                <div class="result-card">
+                    <div class="result-label">📋 Eligibility Status</div>
+                    <div class="result-value">${result.decision}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">💰 Loan Amount Requested</div>
+                    <div class="result-value">₹${formatCurrency(result.loan_amount || 0)}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">📊 Estimated Monthly EMI</div>
+                    <div class="result-value">₹${formatCurrency(Math.round(result.estimated_emi || 0))}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">📈 Debt-to-Income Ratio</div>
+                    <div class="result-value">${(result.debt_to_income_ratio || 0).toFixed(2)}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">🎯 Credit Score Category</div>
+                    <div class="result-value">${result.credit_score_category || 'N/A'}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">⚠️ Risk Level</div>
+                    <div class="result-value">${result.risk_level || 'N/A'}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">🏙️ Selected City</div>
+                    <div class="result-value">${result.city || 'N/A'}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">🏷️ Loan Type</div>
+                    <div class="result-value">${result.loan_type || 'N/A'}</div>
+                </div>
+            `;
+            document.getElementById('resultsGrid').innerHTML = resultsGridHTML;
+
+            // Progress Section
+            const progressHTML = `
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Eligibility Score</span>
+                        <span class="progress-percentage">${Math.round(result.eligibility_score || 0)}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${result.eligibility_score || 0}%"></div>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Credit Score Range</span>
+                        <span class="progress-percentage">${((result.credit_score || 300) / 850 * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${((result.credit_score || 300) / 850 * 100).toFixed(0)}%"></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('progressSection').innerHTML = progressHTML;
+
+            // Recommendation Section
+            const recommendationHTML = `
+                <div class="recommendation-title">💡 Recommendation</div>
+                <div class="recommendation-text">${result.recommendation || 'Thank you for your application.'}</div>
+            `;
+            document.getElementById('recommendationSection').innerHTML = recommendationHTML;
+        }
+
+        function showNoResults() {
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('noResultsMessage').style.display = 'block';
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('en-IN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function downloadResults() {
+            const result = localStorage.getItem('lastResult');
+            if (result) {
+                const data = JSON.parse(result);
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `loan_evaluation_${data.applicant_id}_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function goBackToForm() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
