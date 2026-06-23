@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import LoanApplication, LoanEvaluationState, EmploymentType, LoanType
 from orchestration.orchestrator import LoanEvaluationOrchestrator
+from utils.evaluator import SubmissionEvaluator
 
 app = FastAPI(
     title="Loan Application Evaluation API",
@@ -139,6 +140,35 @@ async def get_loan_types():
 async def get_employment_types():
     employment_types = [e.value for e in EmploymentType]
     return {"employment_types": employment_types}
+
+
+@app.post("/evaluate-submission")
+async def evaluate_submission(participant_name: str, submission_path: str):
+    """Evaluate a case study submission and return detailed report"""
+    try:
+        # Validate submission path
+        submission = Path(submission_path)
+        if not submission.exists():
+            raise HTTPException(status_code=404, detail=f"Submission path not found: {submission_path}")
+        if not submission.is_dir():
+            raise HTTPException(status_code=400, detail=f"Submission path must be a directory: {submission_path}")
+
+        # Run evaluation
+        evaluator = SubmissionEvaluator()
+        report = evaluator.evaluate(
+            submission_path=str(submission.absolute()),
+            participant_name=participant_name
+        )
+
+        return {
+            "status": "success",
+            "report": report.to_dict()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evaluation error: {str(e)}")
 
 
 if __name__ == "__main__":

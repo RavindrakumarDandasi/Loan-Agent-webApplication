@@ -59,7 +59,11 @@ Loan_Agent/
 ├── Ui/                       # User interface
 │   └── app.py               # Streamlit chatbot UI
 ├── utils/                    # Utility modules
-│   └── bedrock_client.py    # Bedrock API client
+│   ├── bedrock_client.py    # Bedrock API client
+│   ├── evaluator.py         # Case study evaluator
+│   ├── review_cli.py        # CLI evaluation tool
+│   ├── reviewprompt.txt     # Review instructions
+│   └── GEN AI CASE STUDY... # Evaluation rubric
 ├── models.py                # Data models & schemas
 ├── config.py                # Configuration settings
 └── requirements.txt         # Python dependencies
@@ -124,12 +128,64 @@ streamlit run Ui/app.py
 python test_system.py
 ```
 
+**Run Case Study Evaluator**:
+```bash
+# Evaluate a submission
+python3 -m utils.review_cli -n "Participant Name" -p "./submission/path"
+
+# See EVALUATOR_GUIDE.md for detailed instructions
+```
+
+## Case Study Evaluation
+
+The project includes an automated evaluator for GEN-AI case study submissions:
+
+```bash
+# CLI evaluation
+python3 -m utils.review_cli --participant-name "John Doe" --submission-path "./submission"
+
+# API endpoint
+POST /evaluate-submission?participant_name=John&submission_path=./submission
+```
+
+**Features**:
+- Validates all 10 required components
+- Scores across 7 evaluation dimensions
+- Generates detailed markdown/JSON reports
+- Produces structured evaluation summaries
+
+See [EVALUATOR_GUIDE.md](./EVALUATOR_GUIDE.md) for complete documentation.
+
 ## API Endpoints
 
 ### Health Check
 ```
 GET /health
 Response: {"status": "healthy", "timestamp": "..."}
+```
+
+### Evaluate Case Study Submission
+```
+POST /evaluate-submission
+Query Parameters:
+  - participant_name: Name of participant (required)
+  - submission_path: Path to submission directory (required)
+
+Response:
+{
+  "status": "success",
+  "report": {
+    "participant_name": "...",
+    "overall_score": 9,
+    "grade": "Excellent",
+    "status": "Pass",
+    "completion_check": {...},
+    "dimension_scores": [...],
+    "strengths": [...],
+    "improvements": [...],
+    "final_verdict": "..."
+  }
+}
 ```
 
 ### Evaluate Loan Application
